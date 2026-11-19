@@ -1,0 +1,21 @@
+{
+  "name": "HomeFlow OS — 살림 AI 비서",
+  "short_name": "HomeFlow",
+  "description": "식단·장보기·가계부·집안일·가족 일정을 한곳에서 관리하는 살림 AI 비서",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF8F5",
+  "theme_color": "#F97316",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "가계부 입력", "short_name": "가계부", "url": "./index.html?action=ledger", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "장보기 목록", "short_name": "장보기", "url": "./index.html?action=grocery", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
