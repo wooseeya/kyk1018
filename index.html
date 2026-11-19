@@ -1128,6 +1128,9 @@
         <button onclick="simulateVoiceCommand('장보기에 시금치랑 두부 추가해줘')" class="w-full text-left text-xs p-2.5 rounded-xl bg-ivory hover:bg-brand-light border border-sand hover:border-brand-border transition-colors">
           🗣️ "장보기에 시금치랑 두부 추가해줘"
         </button>
+        <button onclick="simulateVoiceCommand('장바구니에서 시금치 빼줘')" class="w-full text-left text-xs p-2.5 rounded-xl bg-ivory hover:bg-brand-light border border-sand hover:border-brand-border transition-colors">
+          🗣️ "장바구니에서 시금치 빼줘"
+        </button>
         <button onclick="simulateVoiceCommand('오늘 마트 장보기 28,500원 지출 기록해줘')" class="w-full text-left text-xs p-2.5 rounded-xl bg-ivory hover:bg-brand-light border border-sand hover:border-brand-border transition-colors">
           🗣️ "오늘 마트 장보기 28,500원 지출 기록해줘"
         </button>
@@ -1136,6 +1139,10 @@
         </button>
       </div>
 
+      <label class="flex items-center justify-center gap-2 text-[11px] text-charcoal mb-3 cursor-pointer">
+        <input id="voice-reply-toggle" type="checkbox" checked onchange="toggleVoiceReply(this.checked)" class="accent-orange-500 w-3.5 h-3.5" />
+        🔊 대답을 소리로 듣기
+      </label>
       <button onclick="closeModal('modal-voice')" class="w-full py-2.5 rounded-xl bg-charcoal text-white text-xs font-semibold">
         음성 인식 종료
       </button>
@@ -1977,6 +1984,7 @@
       // 식단: 날짜(mealDate)가 바뀌면 RECIPE_DB에서 아침·점심·저녁이 자동으로 새로 선택됨
       mealDate: null,
       mealShift: { breakfast: 0, lunch: 0, dinner: 0 }, // '다른 메뉴' 버튼으로 넘긴 횟수
+      voiceReply: true,    // 음성 명령에 소리로 대답
       mealPicks: {},       // 오늘 확정된 메뉴 (레시피 목록이 바뀌어도 오늘 메뉴 유지)
       customRecipes: [],   // 내가 추가한 레시피 { id, meal, menu, time, kcal, timer:[분,설명], ing:[], steps:[], custom:true }
       hiddenRecipes: [],   // 추천에서 뺀 기본 레시피 이름
@@ -3367,9 +3375,14 @@
       let reply = '';
 
       const amount = parseAmount(text);
+      const grocery = detectGroceryAction(text);
 
+      // 규칙 G) 장바구니 빼기 · 샀음 체크 · 목록 읽기 · 비우기 — "장바구니에서 두부, 우유 빼줘", "우유 샀어"
+      if (grocery && !amount) {
+        reply = runGroceryAction(grocery);
+      }
       // 규칙 0) 유튜브 영상 검색 — "유튜브에서 된장찌개 레시피 찾아줘", "홈트 영상 보여줘"
-      if (has('유튜브', '영상')) {
+      else if (has('유튜브', '영상')) {
         let q = tidy(text.replace(/(유튜브에서|유튜브로|유튜브|영상으로|영상|찾아\s*줘|찾아|보여\s*줘|검색해\s*줘|검색|틀어\s*줘|좀)/g, ' '));
         if (!q || q === '레시피' || q === '저녁 레시피') {
           const dish = dishFor('dinner');
@@ -3401,7 +3414,7 @@
           .replace(/[\d,.]+\s*만\s*(?:[\d,]+\s*천)?\s*[\d,]*\s*원?|[\d,]+\s*원/g, ' ')
           .replace(/\d{1,2}\s*월\s*\d{1,2}\s*일(에|날)?|(^|\s)\d{1,2}\s*일(에|날)?(?=\s|$)/g, ' ')
           .replace(/(^|\s)(오늘|어제|그저께|그제|방금)(?=\s|$)/g, ' ')
-          .replace(/(기록해\s*줘|기록|지출|수입|썼어|냈어|결제했어|결제|했어|사용|해줘|받았어|받음|들어왔어)(?=\s|$)/g, ' '));
+          .replace(/(기록해\s*줘|기록|지출|수입|썼어|냈어|샀어|샀다|사\s*왔어|구매했어|결제했어|결제|했어|사용|해줘|받았어|받음|들어왔어)(?=\s|$)/g, ' '));
         if (!title) title = category;
         addLedgerEntry({ date, type: isIncome ? 'income' : 'expense', category, title, amount });
         const remain = state.budgetTotal - monthSpent();
@@ -3461,7 +3474,7 @@
         const items = extractItems(text.replace(/(장보기에|장보기|장바구니에|장바구니|사야\s*(해|돼|함)?|살\s*것|살거|사다\s*(줘|놔)?)/g, ' '));
         if (items.length) {
           addGroceryItems(items);
-          reply = `장보기 체크리스트에 <b>${items.map(E).join(', ')}</b>을 추가했어요 🛒`;
+          reply = `장보기 체크리스트에 ${listWithJosa(items, '을/를')} 추가했어요 🛒`;
         } else {
           reply = '어떤 품목을 담을까요? 예: "장보기 계란 우유 추가"';
         }
@@ -3525,7 +3538,7 @@
       else if (has('추가') && text.length <= 20) {
         const items = extractItems(text);
         addGroceryItems(items);
-        reply = `장보기 체크리스트에 <b>${items.map(E).join(', ')}</b>을 추가했어요 🛒 (일정이면 "일정"이라고 함께 말해주세요)`;
+        reply = `장보기 체크리스트에 ${listWithJosa(items, '을/를')} 추가했어요 🛒 (일정이면 "일정"이라고 함께 말해주세요)`;
       }
       // 기본) 리마인드 센터에 메모
       else {
@@ -3538,6 +3551,181 @@
       }
 
       setTimeout(() => appendChatMessage('ai', reply), 250);
+      // 음성으로 말한 명령이면 대답도 음성으로 (+ 폰 화면에서는 대답을 토스트로도 표시)
+      if (source === 'voice') {
+        speakReply(reply);
+        if (state.viewportMode === 'mobile') showToast(`🤖 ${htmlToSpeech(reply).slice(0, 90)}`);
+      }
+    }
+
+    // ===== 장바구니 음성/채팅 명령: 빼기 · 샀음 · 목록 · 비우기 · 되돌리기 =====
+    let lastGroceryUndo = null;
+
+    // 문장에서 장바구니 품목 이름만 추리기 (조사·명령어 제거)
+    function extractGroceryWords(text) {
+      const STOP = new Set(['장바구니', '장보기', '장볼', '것', '목록', '리스트', '에서', '빼', '빼줘', '빼주세요', '지워', '지워줘', '삭제', '삭제해줘', '제거', '제거해줘',
+        '없애', '없애줘', '샀어', '샀다', '샀음', '구매', '구매했어', '사왔어', '이미', '다', '좀', '그리고', '해줘', '주세요', '체크', '체크해줘', '완료']);
+      return text
+        .replace(/(장바구니|장보기|장볼\s*것|목록|리스트)(에서|에|의)?/g, ' ')
+        .replace(/(빼\s*줘|빼\s*주세요|빼|지워\s*줘|지워|지우기|삭제해\s*줘|삭제|제거해\s*줘|제거|없애\s*줘|없애|샀어|샀다|샀음|구매했어|구매|사\s*왔어|체크해\s*줘)(?=\s|,|$)/g, ' ')
+        .replace(/(이랑|랑|하고)(?=\s|,|$)/g, ' ')
+        .split(/[\s,·]+/)
+        .map(w => w.trim())
+        .filter(w => w && !STOP.has(w));
+    }
+
+    // 말한 단어로 장바구니 항목 찾기 ("우유" → "서울우유 1L (2개입)", "두부를" → "두부")
+    function findGroceryMatches(word) {
+      const norm = s => s.replace(/\s+/g, '');
+      const tryWord = w => {
+        // 이름이 정확히 같은 항목이 있으면 그것만 (예: '우유' → '우유'만, '서울우유 1L'은 그대로 둠)
+        const exact = state.groceryList.filter(g => norm(g.name) === norm(w));
+        if (exact.length) return exact;
+        return state.groceryList.filter(g => norm(g.name).includes(norm(w)) || norm(w).includes(norm(g.name)));
+      };
+      let found = tryWord(word);
+      if (!found.length && word.length > 2) found = tryWord(word.replace(/(을|를|은|는|이|가|도|만)$/, ''));
+      return found;
+    }
+
+    // 받침에 따라 조사 고르기: josa('사과','을/를') → '를', josa('두부','이/가') → '가', josa('김치','은/는') → '는'
+    function josa(word, pair) {
+      const [withBatchim, without] = pair.split('/');
+      const ch = String(word).replace(/[\s)\]"'.]+$/, '').slice(-1);
+      const code = ch.charCodeAt(0) - 0xAC00;
+      if (code >= 0 && code <= 11171) return (code % 28 !== 0) ? withBatchim : without;
+      return /[136780LMNlmn]$/.test(ch) ? withBatchim : without; // 숫자·영문 끝 대략 처리
+    }
+    // 품목 목록 + 조사: listWithJosa(['두부','사과'], '을/를') → "<b>두부, 사과</b>를"
+    function listWithJosa(names, pair) {
+      return `<b>${names.map(escapeHtml).join(', ')}</b>${josa(names[names.length - 1], pair)}`;
+    }
+
+    function detectGroceryAction(text) {
+      const inCtx = /(장바구니|장보기|장볼)/.test(text);
+      const words = extractGroceryWords(text);
+      const anyMatch = words.some(w => findGroceryMatches(w).length);
+      if (inCtx && /(비워|전부\s*(빼|지워|삭제)|다\s*(빼|지워|삭제)|모두\s*(빼|지워|삭제))/.test(text)) {
+        return { type: /(산\s*거|산\s*것|체크한)/.test(text) ? 'clearBought' : 'clear' };
+      }
+      if (/(산\s*거|산\s*것|체크한\s*(거|것))\s*(빼|지워|삭제|정리)/.test(text)) return { type: 'clearBought' };
+      if (inCtx && /(보여|알려|읽어|뭐\s*있|뭐야|확인|몇\s*개)/.test(text) && !/(빼|지워|삭제|추가|넣어)/.test(text)) return { type: 'list' };
+      if (/(빼|지워|지우|삭제|제거|없애)/.test(text) && (inCtx || anyMatch)) return { type: 'remove', words };
+      if (/(샀어|샀다|샀음|구매했|사\s*왔)/.test(text) && anyMatch) return { type: 'bought', words };
+      return null;
+    }
+
+    function runGroceryAction(action) {
+      const E = escapeHtml;
+      const undoBtn = `<button onclick="undoGrocery(this)" class="no-speak mt-1.5 block text-[11px] font-semibold text-brand hover:underline">↩️ 되돌리기</button>`;
+
+      if (action.type === 'list') {
+        const open = state.groceryList.filter(g => !g.checked);
+        const done = state.groceryList.filter(g => g.checked);
+        return open.length
+          ? `장바구니에 살 것이 <b>${open.length}개</b> 있어요: <b>${open.map(g => E(g.name)).join(', ')}</b>.` + (done.length ? ` 이미 산 것은 ${done.length}개예요.` : '') + ' 🛒'
+          : (done.length ? `살 것은 다 샀어요! 체크된 항목이 ${done.length}개 있어요. 🛒` : '장바구니가 비어 있어요. "장바구니에 두부 넣어줘"처럼 말해보세요.');
+      }
+
+      if (action.type === 'clear' || action.type === 'clearBought') {
+        const target = action.type === 'clear' ? state.groceryList : state.groceryList.filter(g => g.checked);
+        if (!target.length) return action.type === 'clear' ? '장바구니가 이미 비어 있어요.' : '이미 산(체크한) 항목이 없어요.';
+        lastGroceryUndo = { kind: 'restore', items: target.map(g => ({ ...g })) };
+        const ids = new Set(target.map(g => g.id));
+        state.groceryList = state.groceryList.filter(g => !ids.has(g.id));
+        renderFridgeAndGrocery(); renderBriefingMetrics();
+        addHistory(action.type === 'clear' ? `장바구니 비우기 (${target.length}개)` : `산 항목 정리 (${target.length}개)`);
+        showToast(`🧹 장바구니에서 ${target.length}개를 지웠어요.`);
+        return (action.type === 'clear' ? `장바구니를 비웠어요. (${target.length}개 삭제)` : `이미 산 ${target.length}개를 장바구니에서 지웠어요.`) + undoBtn;
+      }
+
+      // 빼기 / 샀음: 말한 단어별로 찾기
+      const hit = [], miss = [];
+      action.words.forEach(w => {
+        const found = findGroceryMatches(w).filter(g => !hit.includes(g));
+        if (found.length) hit.push(...found); else miss.push(w);
+      });
+      const missText = miss.length ? ` <span class="text-stonewarm">(${miss.map(E).join(', ')}${josa(miss[miss.length - 1], '은/는')} 장바구니에 없어요)</span>` : '';
+      if (!hit.length) {
+        return action.words.length
+          ? `장바구니에서 ${listWithJosa(action.words, '을/를')} 찾지 못했어요. 지금 장바구니: ${state.groceryList.map(g => E(g.name)).join(', ') || '비어 있음'}`
+          : '어떤 품목을 뺄까요? 예: "장바구니에서 두부, 우유 빼줘"';
+      }
+
+      if (action.type === 'remove') {
+        lastGroceryUndo = { kind: 'restore', items: hit.map(g => ({ ...g })) };
+        const ids = new Set(hit.map(g => g.id));
+        state.groceryList = state.groceryList.filter(g => !ids.has(g.id));
+        renderFridgeAndGrocery(); renderBriefingMetrics();
+        addHistory(`장바구니에서 '${hit.map(g => g.name).join(', ')}' 삭제`);
+        showToast(`🗑️ 장바구니에서 '${hit.map(g => g.name).join(', ')}' 뺐어요.`);
+        return `장바구니에서 ${listWithJosa(hit.map(g => g.name), '을/를')} 뺐어요.${missText}` + undoBtn;
+      }
+
+      // bought: 체크 처리
+      lastGroceryUndo = { kind: 'uncheck', ids: hit.filter(g => !g.checked).map(g => g.id) };
+      hit.forEach(g => { g.checked = true; });
+      renderFridgeAndGrocery(); renderBriefingMetrics();
+      addHistory(`장보기 완료 체크: ${hit.map(g => g.name).join(', ')}`);
+      showToast(`✅ '${hit.map(g => g.name).join(', ')}' 구매 완료로 체크했어요.`);
+      const left = state.groceryList.filter(g => !g.checked).length;
+      return `<b>${hit.map(g => E(g.name)).join(', ')}</b> 샀다고 체크했어요. 남은 살 것은 ${left}개예요.${missText}` + undoBtn;
+    }
+
+    function undoGrocery(btn) {
+      if (!lastGroceryUndo) { showToast('되돌릴 작업이 없어요.'); return; }
+      if (lastGroceryUndo.kind === 'restore') {
+        const existing = new Set(state.groceryList.map(g => g.id));
+        lastGroceryUndo.items.forEach(g => { if (!existing.has(g.id)) state.groceryList.push(g); });
+      } else {
+        state.groceryList.forEach(g => { if (lastGroceryUndo.ids.includes(g.id)) g.checked = false; });
+      }
+      lastGroceryUndo = null;
+      renderFridgeAndGrocery(); renderBriefingMetrics();
+      if (btn) btn.remove();
+      showToast('↩️ 장바구니를 되돌렸어요.');
+    }
+
+    // ===== 음성 대답 (TTS) =====
+    function htmlToSpeech(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      div.querySelectorAll('.no-speak, button').forEach(el => el.remove());
+      return (div.textContent || '')
+        .replace(/[\p{Extended_Pictographic}️‍]/gu, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+    function speakReply(html) {
+      if (state.voiceReply === false) return;
+      const synth = window.speechSynthesis;
+      if (!synth || !window.SpeechSynthesisUtterance) return;
+      const text = htmlToSpeech(html);
+      if (!text) return;
+      synth.cancel();
+      if (state.isAudioPlaying) setAudioUI(false);
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'ko-KR';
+      u.rate = 1.05;
+      const ko = synth.getVoices().find(v => v.lang && v.lang.startsWith('ko'));
+      if (ko) u.voice = ko;
+      synth.speak(u);
+    }
+    // 아이폰 등은 사용자가 화면을 누른 순간에 음성 엔진을 깨워둬야 나중에 소리가 남
+    function primeSpeech() {
+      try {
+        const synth = window.speechSynthesis;
+        if (!synth || !window.SpeechSynthesisUtterance || primeSpeech.done) return;
+        const u = new SpeechSynthesisUtterance(' ');
+        u.volume = 0;
+        synth.speak(u);
+        primeSpeech.done = true;
+      } catch (e) {}
+    }
+    function toggleVoiceReply(on) {
+      state.voiceReply = on;
+      saveState();
+      showToast(on ? '🔊 음성 명령에 소리로 대답할게요.' : '🔇 음성 대답을 껐어요. (화면에는 계속 표시돼요)');
     }
 
     // "32,000원" / "3만원" / "3만 5천원" / "2.5만원" → 숫자
@@ -3907,6 +4095,8 @@
     }
 
     function openVoiceModal() {
+      primeSpeech(); // 버튼을 누른 순간 음성 엔진 준비 (아이폰 대응)
+      document.getElementById('voice-reply-toggle').checked = state.voiceReply !== false;
       document.getElementById('modal-voice').classList.remove('hidden');
       lucide.createIcons();
     }
