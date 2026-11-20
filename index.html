@@ -322,7 +322,7 @@
               지영
             </div>
             <div class="min-w-0 flex-1">
-              <p id="profile-name" class="text-xs font-bold text-charcoal truncate">김기복 님</p>
+              <p id="profile-name" class="text-xs font-bold text-charcoal truncate">김지영 님</p>
               <p id="profile-desc" class="text-[11px] text-stonewarm truncate">스마트 홈 매니저 · 4인 가족</p>
             </div>
             <button onclick="event.stopPropagation(); openProfileModal()" title="프로필 · 설정" class="p-1.5 text-stonewarm hover:text-charcoal rounded-lg hover:bg-white">
@@ -416,7 +416,7 @@
               <span class="inline-flex items-center gap-1 text-amber-600 font-medium">☀️ 맑음 11°C (미세먼지 좋음)</span>
             </div>
             <h2 class="text-lg sm:text-xl font-bold text-charcoal tracking-tight">
-              안녕하세요, <span id="greeting-name">김기복</span> 님! 오늘도 기분 좋은 하루예요 🌿
+              안녕하세요, <span id="greeting-name">김지영</span> 님! 오늘도 기분 좋은 하루예요 🌿
             </h2>
             <p id="greeting-summary-line" class="text-xs sm:text-sm text-stonewarm mt-1">
               오늘 저녁은 냉장고 <span class="text-charcoal font-semibold">두부·대파</span>를 활용한 메뉴가 딱 좋고, 오후 4시 아이 픽업 일정이 있어요.
@@ -1971,7 +1971,7 @@
     }
     const DEFAULT_STATE = {
       // 사용자 프로필 (앱의 프로필 카드에서 수정 가능 — 샘플 이름은 가상 인물)
-      userName: '김기복',
+      userName: '김지영',
       profileDesc: '스마트 홈 매니저 · 4인 가족',
       childName: '민준',
       viewportMode: 'desktop', // 'desktop' | 'mobile'
@@ -2279,7 +2279,7 @@
     }
 
     // ===== 프로필 (이름 수정) =====
-    // 3글자 한국 이름이면 성을 뺀 이름으로 부름 (김기복 → 기복)
+    // 3글자 한국 이름이면 성을 뺀 이름으로 부름 (김지영 → 지영)
     function callName() {
       const n = (state.userName || '').trim();
       if (!n) return '사용자';
