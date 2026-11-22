@@ -121,7 +121,7 @@
     .mobile-mode .sm\:text-xl { font-size: 1.0625rem !important; line-height: 1.5rem !important; }
     .mobile-mode .sm\:text-sm { font-size: 0.75rem !important; }
     .mobile-mode #center-main { flex: 1 1 0%; min-height: 0; padding-bottom: 1.25rem; }
-    .mobile-mode #global-command-input::placeholder { font-size: 11px; }
+    .mobile-mode #global-command-input::placeholder { font-size: var(--f11, 11px); }
 
     /* ===== 폰 앱 모드 (실제 휴대폰 · 홈 화면 앱): 개발용 상단 바 숨김 + 노치/홈바 안전 여백 ===== */
     body.native-app { overflow: hidden; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
@@ -157,6 +157,35 @@
     .animate-fade-up {
       animation: fadeSlideUp 0.25s ease-out forwards;
     }
+
+    /* ===== 글자 크기 단계 (프로필 → 글자 크기): md 보통 · lg 크게(기본, 네이버 앱 수준) · xl 아주 크게 =====
+       Tailwind 글자 크기 클래스를 단계별 크기로 덮어씀. 작은 글씨일수록 더 많이 키움. */
+    :root { --f8: 8px; --f9: 9px; --f10: 10px; --f11: 11px; --fxs: 12px; --fsm: 14px; --fbase: 16px; --flg: 18px; --fxl: 20px; --f2xl: 24px; --f3xl: 30px; }
+    :root[data-font="lg"] { --f8: 9.5px; --f9: 11px; --f10: 12px; --f11: 13px; --fxs: 14px; --fsm: 15.5px; --fbase: 17px; --flg: 19.5px; --fxl: 21.5px; --f2xl: 25px; --f3xl: 31px; }
+    :root[data-font="xl"] { --f8: 10.5px; --f9: 12px; --f10: 13.5px; --f11: 14.5px; --fxs: 15.5px; --fsm: 17px; --fbase: 18.5px; --flg: 21px; --fxl: 23px; --f2xl: 27px; --f3xl: 33px; }
+    :root[data-font] .text-\[8px\]  { font-size: var(--f8) !important; }
+    :root[data-font] .text-\[9px\]  { font-size: var(--f9) !important; line-height: 1.35 !important; }
+    :root[data-font] .text-\[10px\] { font-size: var(--f10) !important; line-height: 1.4 !important; }
+    :root[data-font] .text-\[11px\] { font-size: var(--f11) !important; line-height: 1.45 !important; }
+    :root[data-font] .text-xs   { font-size: var(--fxs) !important; line-height: 1.5 !important; }
+    :root[data-font] .text-sm   { font-size: var(--fsm) !important; line-height: 1.5 !important; }
+    :root[data-font] .text-base { font-size: var(--fbase) !important; line-height: 1.45 !important; }
+    :root[data-font] .text-lg   { font-size: var(--flg) !important; line-height: 1.4 !important; }
+    :root[data-font] .text-xl   { font-size: var(--fxl) !important; line-height: 1.35 !important; }
+    :root[data-font] .text-2xl  { font-size: var(--f2xl) !important; line-height: 1.3 !important; }
+    :root[data-font] .text-3xl  { font-size: var(--f3xl) !important; line-height: 1.25 !important; }
+    :root[data-font] .yt-chip   { font-size: var(--f11) !important; }
+    @media (min-width: 640px) {
+      :root[data-font] .sm\:text-sm { font-size: var(--fsm) !important; }
+      :root[data-font] .sm\:text-xl { font-size: var(--fxl) !important; }
+    }
+    /* 한글은 단어 중간이 아니라 띄어쓰기 단위로 줄바꿈 (예: '장바구니 추/가' → '장바구니 / 추가') */
+    body { word-break: keep-all; overflow-wrap: anywhere; }
+    /* 폰 화면: 큰 글씨에서도 하단 탭·요일 버튼이 넘치지 않게 */
+    :root[data-font] #mobile-bottom-nav button span { white-space: nowrap; }
+    /* 하단 탭바: 5등분 그리드로 AI 버튼을 정중앙에, 나머지 버튼도 같은 간격으로 */
+    #mobile-bottom-nav.flex { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); justify-items: center; align-items: center; }
+    :root[data-font] #chore-week-strip button span { white-space: nowrap; letter-spacing: -0.02em; }
 
     /* 유튜브 검색 칩 */
     .yt-chip {
@@ -587,7 +616,7 @@
             </div>
 
             <div class="mt-4 pt-3 border-t border-sand flex items-center gap-2">
-              <input id="quick-grocery-input" type="text" placeholder="살 품목 입력 (예: 대파, 요거트)" class="flex-1 text-xs bg-ivory border border-sand rounded-xl px-3 py-2 focus:outline-none focus:border-brand" onkeydown="if(event.key==='Enter') addGroceryFromInput()" />
+              <input id="quick-grocery-input" type="text" placeholder="살 품목 입력 (예: 대파, 요거트)" class="flex-1 min-w-0 w-full text-xs bg-ivory border border-sand rounded-xl px-3 py-2 focus:outline-none focus:border-brand" onkeydown="if(event.key==='Enter') addGroceryFromInput()" />
               <button onclick="addGroceryFromInput()" class="py-2 px-3 rounded-xl bg-charcoal hover:bg-stone-800 text-white text-xs font-semibold shrink-0 transition-colors">
                 + 추가
               </button>
@@ -1180,6 +1209,16 @@
           </div>
         </div>
         <p class="text-[11px] text-stonewarm">입력한 정보는 이 기기(브라우저)에만 저장되며 외부로 전송되지 않습니다.</p>
+
+        <!-- 글자 크기 -->
+        <div class="rounded-xl border border-sand bg-ivory p-3">
+          <p class="text-xs font-bold text-charcoal mb-2">🔠 글자 크기</p>
+          <div id="font-size-picker" class="flex gap-1.5">
+            <button data-size="md" onclick="setFontSize('md')"><span class="text-xs">보통</span></button>
+            <button data-size="lg" onclick="setFontSize('lg')"><span class="text-sm">크게</span></button>
+            <button data-size="xl" onclick="setFontSize('xl')"><span class="text-base">아주 크게</span></button>
+          </div>
+        </div>
 
         <!-- 데이터 백업 / 복원 -->
         <div class="rounded-xl border border-sand bg-ivory p-3">
@@ -1985,6 +2024,7 @@
       mealDate: null,
       mealShift: { breakfast: 0, lunch: 0, dinner: 0 }, // '다른 메뉴' 버튼으로 넘긴 횟수
       voiceReply: true,    // 음성 명령에 소리로 대답
+      fontSize: 'lg',      // 글자 크기: 'md' 보통 · 'lg' 크게(기본) · 'xl' 아주 크게
       mealPicks: {},       // 오늘 확정된 메뉴 (레시피 목록이 바뀌어도 오늘 메뉴 유지)
       customRecipes: [],   // 내가 추가한 레시피 { id, meal, menu, time, kcal, timer:[분,설명], ing:[], steps:[], custom:true }
       hiddenRecipes: [],   // 추천에서 뺀 기본 레시피 이름
@@ -2094,7 +2134,24 @@
     }
 
     const state = loadState();
+    applyFontSize(state.fontSize); // 화면 그리기 전에 글자 크기부터 적용
     ensureToday();
+
+    // ===== 글자 크기 =====
+    function applyFontSize(size) {
+      const s = ['md', 'lg', 'xl'].includes(size) ? size : 'lg';
+      document.documentElement.setAttribute('data-font', s);
+      document.querySelectorAll('#font-size-picker button').forEach(b => {
+        const on = b.dataset.size === s;
+        b.className = `flex-1 py-2 rounded-xl border font-semibold transition-colors ${on ? 'bg-brand text-white border-brand' : 'bg-white text-charcoal border-sand hover:border-brand-border'}`;
+      });
+    }
+    function setFontSize(size) {
+      state.fontSize = size;
+      applyFontSize(size);
+      saveState();
+      showToast(`🔠 글자 크기를 '${{ md: '보통', lg: '크게', xl: '아주 크게' }[size]}'로 바꿨어요.`);
+    }
     // 새 항목 id는 저장된 모든 id보다 크게 시작 (샘플 데이터 id와 겹치지 않도록)
     let uid = Math.max(Date.now(), ...[state.expenses, state.chores, state.bills, state.expiringItems, state.groceryList, state.familySchedules, state.reminders]
       .flat().map(x => Number(x && x.id) || 0)) + 1000;
@@ -2301,6 +2358,7 @@
       document.getElementById('profile-input-desc').value = state.profileDesc || '';
       document.getElementById('profile-input-child').value = state.childName || '';
       document.getElementById('profile-input-budget').value = state.budgetTotal;
+      applyFontSize(state.fontSize); // 글자 크기 버튼 선택 표시
       document.getElementById('modal-profile').classList.remove('hidden');
       lucide.createIcons();
       if (state.viewportMode === 'mobile') closeMobileOverlays();
@@ -3196,25 +3254,52 @@
 
     // 10. 가족 케어 렌더링
     function renderFamily() {
-      document.getElementById('family-count-badge').textContent = `일정 ${state.familySchedules.length}건`;
-      document.getElementById('nav-badge-schedule').textContent = state.familySchedules.length;
+      const pending = state.familySchedules.filter(f => !f.done).length;
+      const doneCount = state.familySchedules.length - pending;
+      document.getElementById('family-count-badge').textContent = `일정 ${pending}건`;
+      document.getElementById('nav-badge-schedule').textContent = pending;
 
       const listEl = document.getElementById('family-care-list');
-      listEl.innerHTML = state.familySchedules.map(f => `
-        <div onclick="toggleFamilyDone(${f.id})" class="cursor-pointer p-2.5 rounded-xl border ${f.done ? 'bg-ivory/60 border-sand' : 'bg-white border-sand hover:border-brand-border'} transition-all flex items-start justify-between gap-2">
-          <div>
+      listEl.innerHTML = (state.familySchedules.length ? state.familySchedules.map(f => `
+        <div class="p-2.5 rounded-xl border ${f.done ? 'bg-ivory/60 border-sand' : 'bg-white border-sand hover:border-brand-border'} transition-all flex items-start gap-2">
+          <button onclick="toggleFamilyDone(${f.id})" title="${f.done ? '완료 취소' : '완료 체크'}"
+            class="mt-0.5 w-5 h-5 shrink-0 rounded-full border flex items-center justify-center text-[10px] font-bold ${f.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-sand text-transparent hover:border-emerald-400'}">✓</button>
+          <div class="flex-1 min-w-0">
             <span class="inline-block text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md mb-1">${escapeHtml(f.who)}</span>
-            <p class="text-xs font-medium ${f.done ? 'line-through text-stonewarm' : 'text-charcoal'}">${escapeHtml(f.title)}</p>
+            <p class="text-xs font-medium break-words ${f.done ? 'line-through text-stonewarm' : 'text-charcoal'}">${escapeHtml(f.title)}</p>
           </div>
-          <span class="text-xs ${f.done ? 'text-emerald-600' : 'text-stonewarm/50'}">${f.done ? '✓' : '○'}</span>
+          <div class="flex items-center gap-0.5 shrink-0">
+            <button onclick="openQuickModal('family', ${f.id})" title="수정" class="w-7 h-7 rounded-lg text-stonewarm hover:text-brand hover:bg-brand-light flex items-center justify-center"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+            <button onclick="deleteFamilySchedule(${f.id})" title="삭제" class="w-7 h-7 rounded-lg text-stonewarm hover:text-red-500 hover:bg-red-50 flex items-center justify-center"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </div>
         </div>
-      `).join('');
+      `).join('') : '<p class="text-xs text-stonewarm p-2">등록된 가족 일정이 없어요. + 버튼으로 추가해보세요.</p>')
+        + (doneCount ? `<button onclick="clearDoneFamily()" class="w-full text-[11px] text-stonewarm hover:text-brand pt-1">✓ 완료된 일정 ${doneCount}건 정리하기</button>` : '');
+      if (window.lucide) lucide.createIcons();
     }
 
     function toggleFamilyDone(id) {
       const target = state.familySchedules.find(f => f.id === id);
       if (target) target.done = !target.done;
       renderFamily();
+      renderBriefingMetrics();
+    }
+
+    function deleteFamilySchedule(id) {
+      const f = state.familySchedules.find(x => x.id === id);
+      if (!f || !confirm(`[${f.who}] ${f.title}\n이 일정을 삭제할까요?`)) return;
+      state.familySchedules = state.familySchedules.filter(x => x.id !== id);
+      renderFamily(); renderBriefingMetrics();
+      addHistory(`가족 일정 삭제: [${f.who}] ${f.title}`);
+      showToast('🗑️ 가족 일정을 삭제했어요.');
+    }
+
+    function clearDoneFamily() {
+      const done = state.familySchedules.filter(f => f.done);
+      if (!done.length || !confirm(`완료된 일정 ${done.length}건을 목록에서 지울까요?`)) return;
+      state.familySchedules = state.familySchedules.filter(f => !f.done);
+      renderFamily(); renderBriefingMetrics();
+      showToast(`🧹 완료된 일정 ${done.length}건을 정리했어요.`);
     }
 
     // 가족 카톡 알림: 카카오톡 자동 전송은 카카오 개발자 앱 키 + 로그인 + 등록된 웹 도메인이 필요해 HTML 파일만으로는 불가.
@@ -3942,8 +4027,9 @@
     }
 
     // 15. 빠른 입력 모달 (장보기 / 가계부 지출 / 가족 일정)
-    function openQuickModal(type) {
+    function openQuickModal(type, editId) {
       if (type === 'expense') { openLedgerModal(true); return; } // 지출 입력은 가계부 모달(날짜·수입/지출 선택)로 통일
+      document.getElementById('quick-modal-submit').textContent = '등록하기';
       const titleEl = document.getElementById('quick-modal-title');
       const bodyEl = document.getElementById('quick-modal-body');
       const submitBtn = document.getElementById('quick-modal-submit');
@@ -3998,31 +4084,48 @@
           }
         };
       } else if (type === 'family') {
-        titleEl.textContent = '📅 우리 가족 일정 / 케어 등록';
+        // editId가 있으면 수정 모드
+        const editing = editId ? state.familySchedules.find(f => f.id === editId) : null;
+        titleEl.textContent = editing ? '✏️ 가족 일정 수정' : '📅 우리 가족 일정 / 케어 등록';
+        const whoDefault = editing ? editing.who : (state.childName || '가족');
+        const whoChips = ['나', '남편', state.childName, '첫째', '둘째', '친정엄마', '시어머니', '가족']
+          .filter((w, i, a) => w && a.indexOf(w) === i);
         bodyEl.innerHTML = `
           <div class="space-y-3">
             <div>
               <label class="block text-xs font-semibold text-charcoal mb-1">대상 가족 구성원</label>
-              <input id="modal-fam-who" type="text" value="${escapeHtml(state.childName || '가족')}" class="w-full text-xs bg-ivory border border-sand rounded-xl p-2.5 focus:outline-none focus:border-brand" />
+              <input id="modal-fam-who" type="text" value="${escapeHtml(whoDefault)}" class="w-full text-xs bg-ivory border border-sand rounded-xl p-2.5 focus:outline-none focus:border-brand" />
+              <div class="flex flex-wrap gap-1 mt-1.5">
+                ${whoChips.map(w => `<button type="button" onclick="document.getElementById('modal-fam-who').value=this.textContent" class="px-2 py-0.5 rounded-md text-[11px] bg-white border border-sand text-stonewarm hover:border-brand hover:text-brand">${escapeHtml(w)}</button>`).join('')}
+              </div>
             </div>
             <div>
               <label class="block text-xs font-semibold text-charcoal mb-1">일정 및 준비물 내용</label>
-              <input id="modal-fam-title" type="text" placeholder="예: 15:30 소아과 정기검진 및 예방접종" class="w-full text-xs bg-ivory border border-sand rounded-xl p-2.5 focus:outline-none focus:border-brand" />
+              <input id="modal-fam-title" type="text" value="${editing ? escapeHtml(editing.title) : ''}" placeholder="예: 15:30 소아과 정기검진 및 예방접종" class="w-full text-xs bg-ivory border border-sand rounded-xl p-2.5 focus:outline-none focus:border-brand" />
             </div>
+            ${editing ? `<button type="button" onclick="closeModal('modal-quick-input'); deleteFamilySchedule(${editing.id})" class="text-[11px] font-semibold text-red-500 hover:underline">🗑️ 이 일정 삭제</button>` : ''}
           </div>
         `;
+        submitBtn.textContent = editing ? '수정하기' : '등록하기';
         submitBtn.onclick = () => {
           const who = document.getElementById('modal-fam-who').value.trim() || '가족';
           const title = document.getElementById('modal-fam-title').value.trim();
-          if (title) {
+          if (!title) { showToast('일정 내용을 입력해주세요.'); document.getElementById('modal-fam-title').focus(); return; }
+          if (editing) {
+            editing.who = who;
+            editing.title = title;
+            addHistory(`가족 일정 수정: [${who}] ${title}`);
+            showToast(`✏️ [${who}] 일정을 수정했어요.`);
+          } else {
             state.familySchedules.unshift({ id: nextId(), who, title, done: false });
-            renderFamily();
-            renderBriefingMetrics();
             addHistory(`가족 일정 등록: [${who}] ${title}`);
             showToast(`📅 [${who}] 일정이 등록되었습니다.`);
-            closeModal('modal-quick-input');
           }
+          renderFamily();
+          renderBriefingMetrics();
+          closeModal('modal-quick-input');
         };
+        setTimeout(() => document.getElementById('modal-fam-title').focus(), 50);
       }
 
       document.getElementById('modal-quick-input').classList.remove('hidden');
