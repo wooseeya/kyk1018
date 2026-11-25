@@ -149,6 +149,49 @@
       .desktop-mode > #center-main { height: 100%; overflow-y: auto; }
     }
 
+    /* 가운데 영역 폭 기준 배치: 모니터 크기가 아니라 '양쪽 패널을 뺀 실제 남은 폭'에 맞춰 칸 수를 정함
+       → 작은 모니터에서 카드가 좁아져 '맞춤/영양'처럼 글자가 끊기는 일을 막음 */
+    .desktop-mode > #center-main { container-type: inline-size; container-name: center; }
+    @container center (max-width: 699px) {
+      #center-main .sm\:flex-row { flex-direction: column !important; }
+      #center-main .sm\:items-center { align-items: flex-start !important; }
+      #main-cards-grid { grid-template-columns: minmax(0, 1fr) !important; }
+      #quick-actions-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    }
+    @container center (min-width: 700px) and (max-width: 1099px) {
+      #main-cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    }
+    @container center (min-width: 1100px) {
+      #main-cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    }
+    @container center (min-width: 700px) {
+      #quick-actions-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+    }
+    @container center (max-width: 459px) {
+      #briefing-metrics-grid { grid-template-columns: minmax(0, 1fr) !important; }
+    }
+    @container center (min-width: 460px) and (max-width: 579px) {
+      #briefing-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    }
+    @container center (min-width: 580px) and (max-width: 919px) {
+      #briefing-metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    }
+    @container center (min-width: 920px) {
+      #briefing-metrics-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+    }
+    /* 짧은 이름표(배지·버튼 글자)는 줄바꿈하지 않음 */
+    #workspace-root span.rounded-full,
+    #workspace-root button > span:only-of-type,
+    #workspace-root h4 + span,
+    #center-main button > span:not(.block):not(.min-w-0),
+    #left-sidebar button span,
+    #left-sidebar span.text-xs,
+    #left-sidebar span.text-\[10px\] { white-space: nowrap; }
+    /* '아주 크게' 글자일 때는 왼쪽 메뉴 폭을 조금 넓혀 메뉴 이름이 한 줄에 들어가게 */
+    @media (min-width: 1024px) {
+      :root[data-font="xl"] .desktop-mode > #left-sidebar { width: 296px !important; }
+    }
+
     /* 부드러운 페이드인 */
     @keyframes fadeSlideUp {
       from { opacity: 0; transform: translateY(8px); }
@@ -452,8 +495,8 @@
             </p>
           </div>
           <div class="flex items-center gap-2 shrink-0">
-            <button onclick="openRecipeModal('dinner')" class="px-3.5 py-2 rounded-xl bg-brand-light hover:bg-orange-100 text-brand border border-brand-border text-xs font-semibold flex items-center gap-1.5 transition-colors">
-              <span>🍳 오늘 저녁 레시피</span>
+            <button onclick="openRecipeModal(currentMealKey())" class="px-3.5 py-2 rounded-xl bg-brand-light hover:bg-orange-100 text-brand border border-brand-border text-xs font-semibold flex items-center gap-1.5 transition-colors">
+              <span id="greeting-recipe-label">🍳 오늘 저녁 레시피</span>
             </button>
           </div>
         </section>
@@ -508,7 +551,7 @@
             </h3>
             <span class="text-[11px] text-stonewarm">원클릭 즉시 기록 및 가이드 실행</span>
           </div>
-          <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          <div id="quick-actions-grid" class="grid grid-cols-3 sm:grid-cols-6 gap-3">
             <button onclick="openRecipeModal('dinner')" class="group bg-white hover:bg-brand-light border border-sand hover:border-brand-border rounded-2xl p-3.5 flex flex-col items-center text-center gap-2 transition-all shadow-soft">
               <div class="w-11 h-11 rounded-full bg-orange-50 group-hover:bg-brand group-hover:text-white text-xl flex items-center justify-center transition-colors">🍳</div>
               <span class="text-xs font-semibold text-charcoal group-hover:text-brand">레시피 찾기</span>
@@ -552,7 +595,7 @@
                 <span class="text-[11px] font-semibold bg-orange-50 text-brand px-2.5 py-0.5 rounded-full border border-brand-border">맞춤 영양</span>
               </div>
               <div class="flex items-center justify-between gap-2 mb-3">
-                <p class="text-xs text-stonewarm">날짜에 따라 매일 바뀌는 오늘의 식단이에요. 메뉴를 누르면 레시피가 열려요.</p>
+                <p class="text-xs text-stonewarm">매일 바뀌는 오늘의 식단이에요. 아침 8시·점심 12시·저녁 7시가 지나면 자동으로 먹음 체크돼요.</p>
                 <button onclick="openRecipeManager()" class="shrink-0 text-[11px] font-semibold text-brand hover:underline" title="레시피 목록 · 내 레시피 추가">📚 레시피 관리</button>
               </div>
 
@@ -564,7 +607,7 @@
             <div class="mt-4 pt-3 border-t border-sand flex items-center gap-2">
               <button onclick="openRecipeModal('dinner')" class="flex-1 py-2 px-3 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
                 <i data-lucide="chef-hat" class="w-3.5 h-3.5"></i>
-                <span>저녁 레시피 보기</span>
+                <span>레시피</span>
               </button>
               <button onclick="openYouTube(dishFor('dinner').menu.split('&')[0].trim() + ' 레시피')" class="py-2 px-3 rounded-xl bg-white hover:bg-red-600 text-red-600 hover:text-white text-xs font-semibold border border-red-200 transition-colors" title="유튜브에서 저녁 레시피 영상 보기">
                 <i data-lucide="youtube" class="w-3.5 h-3.5"></i>
@@ -741,9 +784,9 @@
 
               <!-- 이번 달 공과금 (가까운 납부일 순) -->
               <div class="bg-ivory rounded-xl p-2.5 border border-sand mb-3">
-                <div class="flex items-center justify-between mb-1.5">
-                  <p class="text-[11px] font-bold text-charcoal">🧾 이번 달 공과금 <span id="bills-summary" class="font-normal text-stonewarm"></span></p>
-                  <button onclick="openBillsModal()" class="text-[11px] font-semibold text-brand hover:underline">전체 · 추가 ›</button>
+                <div class="flex items-start justify-between gap-2 mb-1.5">
+                  <p class="text-[11px] font-bold text-charcoal"><span class="whitespace-nowrap">🧾 이번 달 공과금</span> <span id="bills-summary" class="font-normal text-stonewarm whitespace-nowrap"></span></p>
+                  <button onclick="openBillsModal()" class="shrink-0 whitespace-nowrap text-[11px] font-semibold text-brand hover:underline">전체 · 추가 ›</button>
                 </div>
                 <div id="bills-preview" class="space-y-1"></div>
               </div>
@@ -948,13 +991,16 @@
       <div class="py-4 space-y-4">
         <div id="recipe-modal-actions" class="flex flex-wrap gap-1.5 -mt-1"></div>
         <!-- 끼니 전환 탭 + 다른 메뉴 -->
-        <div class="flex items-center justify-between gap-2">
+        <div id="recipe-nav-row" class="flex items-center justify-between gap-2">
           <div id="recipe-meal-tabs" class="flex gap-1.5">
             <button data-meal="breakfast" onclick="openRecipeModal('breakfast')">아침</button>
             <button data-meal="lunch" onclick="openRecipeModal('lunch')">점심</button>
             <button data-meal="dinner" onclick="openRecipeModal('dinner')">저녁</button>
           </div>
-          <button onclick="rotateMenu(currentRecipeMeal); openRecipeModal(currentRecipeMeal)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-ivory border border-sand text-charcoal hover:text-brand">🔀 다른 메뉴</button>
+          <span class="flex gap-1.5 shrink-0">
+            <button onclick="closeModal('modal-recipe'); openMenuPicker(currentRecipeMeal)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-ivory border border-sand text-charcoal hover:text-brand whitespace-nowrap">📋 메뉴 고르기</button>
+            <button onclick="rotateMenu(currentRecipeMeal); openRecipeModal(currentRecipeMeal)" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-ivory border border-sand text-charcoal hover:text-brand whitespace-nowrap">🔀 다른 메뉴</button>
+          </span>
         </div>
         <!-- 필요 재료 -->
         <div class="bg-ivory rounded-xl p-3.5 border border-sand">
@@ -985,7 +1031,7 @@
         </div>
 
         <!-- 유튜브 레시피 영상 찾기 -->
-        <div class="rounded-xl border border-red-100 bg-red-50/50 p-3">
+        <div id="recipe-youtube-box" class="rounded-xl border border-red-100 bg-red-50/50 p-3">
           <p class="text-xs font-bold text-charcoal mb-2 flex items-center gap-1.5">
             <span class="inline-flex w-5 h-3.5 rounded bg-red-600 text-white text-[8px] items-center justify-center">▶</span>
             유튜브에서 이 레시피 영상 찾기
@@ -995,7 +1041,7 @@
         </div>
 
         <!-- 만개의 레시피 찾기 -->
-        <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+        <div id="recipe-man-box" class="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
           <p class="text-xs font-bold text-charcoal mb-2 flex items-center gap-1.5">
             <span class="inline-flex px-1 h-4 rounded bg-amber-500 text-white text-[9px] font-bold items-center justify-center">만개</span>
             만개의 레시피에서 다른 버전 찾기
@@ -1377,6 +1423,29 @@
   <!-- =========================================================
        모달 11: 레시피 관리 (전체 목록 · 숨기기 · 내 레시피 추가/수정/삭제)
   ========================================================== -->
+  <!-- 끼니 메뉴 직접 고르기 -->
+  <div id="modal-menu-pick" class="hidden fixed inset-0 z-50 bg-charcoal/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl border border-sand max-w-md w-full shadow-2xl animate-fade-up max-h-[88vh] flex flex-col">
+      <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-sand">
+        <h3 id="mp-title" class="font-bold text-base text-charcoal">🍽️ 메뉴 고르기</h3>
+        <button onclick="closeModal('modal-menu-pick')" class="p-1 rounded-lg hover:bg-ivory text-stonewarm"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="px-5 pt-3 space-y-2">
+        <div id="mp-meal-tabs" class="flex gap-1.5">
+          <button data-meal="breakfast" onclick="openMenuPicker('breakfast')">아침</button>
+          <button data-meal="lunch" onclick="openMenuPicker('lunch')">점심</button>
+          <button data-meal="dinner" onclick="openMenuPicker('dinner')">저녁</button>
+        </div>
+        <input id="mp-search" type="text" oninput="renderMenuPicker()" placeholder="메뉴 이름이나 재료로 찾기 (예: 두부, 국수)" class="w-full text-xs bg-ivory border border-sand rounded-lg px-3 py-2 focus:outline-none focus:border-brand" />
+      </div>
+      <div id="mp-list" class="overflow-y-auto px-5 py-3 space-y-1.5"></div>
+      <div class="px-5 py-3 border-t border-sand flex items-center justify-between gap-2">
+        <span class="text-[11px] text-stonewarm">찾는 메뉴가 없나요?</span>
+        <button onclick="addMenuFromPicker()" class="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-brand-light border border-brand-border text-brand whitespace-nowrap">+ 내 레시피로 추가</button>
+      </div>
+    </div>
+  </div>
+
   <div id="modal-recipes" class="hidden fixed inset-0 z-50 bg-charcoal/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl border border-sand max-w-xl w-full shadow-2xl animate-fade-up max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between px-5 pt-5 pb-3 border-b border-sand">
@@ -1863,6 +1932,53 @@
     }
 
     // 원하는 레시피를 오늘 메뉴로 지정
+    // ===== 끼니 메뉴 직접 고르기 =====
+    let mpMeal = 'dinner';
+    function openMenuPicker(meal) {
+      const switching = document.getElementById('modal-menu-pick').classList.contains('hidden') === false;
+      mpMeal = MEAL_KEYS.includes(meal) ? meal : 'dinner';
+      if (!switching) document.getElementById('mp-search').value = '';
+      renderMenuPicker();
+      document.getElementById('modal-menu-pick').classList.remove('hidden');
+      lucide.createIcons();
+      if (state.viewportMode === 'mobile' && typeof closeMobileOverlays === 'function') closeMobileOverlays();
+    }
+
+    function renderMenuPicker() {
+      document.getElementById('mp-title').textContent = `🍽️ 오늘 ${MEAL_LABEL[mpMeal]} 메뉴 고르기`;
+      document.querySelectorAll('#mp-meal-tabs button').forEach(b => {
+        const on = b.dataset.meal === mpMeal;
+        b.className = `px-3 py-1 rounded-lg text-[11px] font-semibold border ${on ? 'bg-brand text-white border-brand' : 'bg-white text-stonewarm border-sand hover:text-brand'}`;
+      });
+      const q = document.getElementById('mp-search').value.trim();
+      const current = dishFor(mpMeal).menu;
+      const list = recipesFor(mpMeal).filter(r => !q || r.menu.includes(q) || (r.ing || []).some(i => i.includes(q)));
+      document.getElementById('mp-list').innerHTML = list.length ? list.map(r => {
+        const on = r.menu === current;
+        return `<button onclick="pickMenu(this.dataset.menu)" data-menu="${escapeHtml(r.menu)}" class="w-full flex items-center justify-between gap-2 p-2.5 rounded-xl border text-left ${on ? 'border-brand bg-brand-light' : 'border-sand bg-white hover:border-brand-border hover:bg-brand-light/40'}">
+          <span class="min-w-0">
+            <span class="block text-xs font-semibold text-charcoal truncate">${escapeHtml(r.menu)}${r.custom ? ' ✍️' : ''}</span>
+            <span class="block text-[10px] text-stonewarm truncate">${escapeHtml(r.time || '')}${r.kcal ? ' · ' + escapeHtml(r.kcal) : ''} · ${escapeHtml((r.ing || []).slice(0, 3).join(', '))}</span>
+          </span>
+          <span class="shrink-0 text-[10px] font-bold ${on ? 'text-brand' : 'text-stonewarm'}">${on ? '✓ 오늘 메뉴' : '선택'}</span>
+        </button>`;
+      }).join('') : `<div class="text-[11px] text-stonewarm p-4 text-center rounded-xl border border-dashed border-sand">'${escapeHtml(q)}'에 맞는 ${MEAL_LABEL[mpMeal]} 레시피가 없어요.<br>아래 <b>+ 내 레시피로 추가</b>로 등록할 수 있어요.</div>`;
+    }
+
+    function pickMenu(menu) {
+      if (menu !== dishFor(mpMeal).menu) setTodayMenu(mpMeal, menu);
+      closeModal('modal-menu-pick');
+      updateDynamicTexts();
+    }
+
+    function addMenuFromPicker() {
+      const q = document.getElementById('mp-search').value.trim();
+      closeModal('modal-menu-pick');
+      openRecipeManager(mpMeal);
+      startRecipeForm();
+      if (q) document.getElementById('rm-menu').value = q;
+    }
+
     function setTodayMenu(meal, menu) {
       const shift = (state.mealShift && state.mealShift[meal]) || 0;
       state.mealPicks = state.mealPicks || {};
@@ -2335,6 +2451,47 @@
         renderAll();
         showToast('🌅 날짜가 바뀌어 오늘의 아침·점심·저녁 식단이 새로 준비되었어요!');
       }
+      // 식사 시간이 지나면 먹음 자동 체크 + 상단 배너를 다음 끼니로
+      const autoDone = autoCheckMeals();
+      if (autoDone.length) {
+        renderMeals();
+        renderBriefingMetrics();
+      }
+      if (autoDone.length || lastMealKey !== currentMealKey()) {
+        lastMealKey = currentMealKey();
+        updateDynamicTexts();
+      }
+    }
+
+    // ===== 끼니 시간 =====
+    // 아침 8시 · 점심 12시 · 저녁 19시가 지나면 그 끼니는 먹은 것으로 봄
+    var MEAL_TIME = { breakfast: 8, lunch: 12, dinner: 19 };
+    var lastMealKey = null;
+
+    // 지금 챙길 끼니: 8시 전 아침 → 12시 전 점심 → 그 뒤로는 저녁
+    function currentMealKey(now = new Date()) {
+      const h = now.getHours();
+      return h < MEAL_TIME.breakfast ? 'breakfast' : h < MEAL_TIME.lunch ? 'lunch' : 'dinner';
+    }
+
+    // 시간이 지난 끼니를 하루에 한 번만 자동 체크 (그 뒤 사용자가 체크를 풀면 다시 체크하지 않음)
+    function autoCheckMeals(now = new Date()) {
+      const today = todayKey();
+      let changed = false;
+      if (!state.mealAuto || state.mealAuto.date !== today) { state.mealAuto = { date: today, keys: [] }; changed = true; }
+      const done = [];
+      MEAL_KEYS.forEach(k => {
+        if (now.getHours() < MEAL_TIME[k] || state.mealAuto.keys.includes(k)) return;
+        state.mealAuto.keys.push(k);
+        changed = true;
+        if (!state.meals[k].done) {
+          state.meals[k].done = true;
+          done.push(k);
+          addHistory(`${MEAL_LABEL[k]} 식사 완료(자동 · ${MEAL_TIME[k]}시 지남): ${dishFor(k).menu}`);
+        }
+      });
+      if (changed) saveState();
+      return done;
     }
 
     // 상태 변화에 따라 함께 바뀌어야 하는 부가 텍스트 (사이드바 배지, 인사말 요약)
@@ -2348,8 +2505,10 @@
 
       const nextFamily = state.familySchedules.find(f => !f.done);
       const expNames = state.expiringItems.map(i => i.name).join('·');
+      const nowMeal = currentMealKey();
+      document.getElementById('greeting-recipe-label').textContent = `🍳 오늘 ${MEAL_LABEL[nowMeal]} 레시피`;
       document.getElementById('greeting-summary-line').innerHTML =
-        `오늘 저녁은 <span class="text-charcoal font-semibold">${escapeHtml(dishFor('dinner').menu)}</span> 추천` +
+        `오늘 ${MEAL_LABEL[nowMeal]}은 <span class="text-charcoal font-semibold">${escapeHtml(dishFor(nowMeal).menu)}</span> 추천` +
         (expNames ? ` (임박 재료: <span class="text-charcoal font-semibold">${escapeHtml(expNames)}</span>)` : '') +
         (nextFamily ? `, 다음 가족 일정은 <span class="text-charcoal font-semibold">${escapeHtml(nextFamily.title)}</span>이에요.` : ', 남은 가족 일정은 없어요.');
     }
@@ -2669,7 +2828,8 @@
             </span>
           </button>
           <div class="flex items-center gap-1 shrink-0">
-            <button onclick="rotateMenu('${key}')" title="다른 메뉴 추천" class="w-6 h-6 rounded-lg text-stonewarm hover:text-brand hover:bg-white flex items-center justify-center text-xs">🔀</button>
+            <button onclick="openMenuPicker('${key}')" title="${MEAL_LABEL[key]} 메뉴 직접 고르기" class="h-6 px-2 rounded-lg border border-sand bg-white text-[10px] font-semibold text-charcoal hover:text-brand hover:border-brand whitespace-nowrap">변경</button>
+            <button onclick="rotateMenu('${key}')" title="아무 메뉴나 다른 걸로 추천" class="w-6 h-6 rounded-lg text-stonewarm hover:text-brand hover:bg-white flex items-center justify-center text-xs">🔀</button>
             <button onclick="toggleMealDone('${key}')" title="먹음 체크" class="w-6 h-6 rounded-lg border flex items-center justify-center text-[11px] font-bold ${item.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-sand text-stonewarm/50 hover:border-emerald-400'}">✓</button>
           </div>
         </div>`;
